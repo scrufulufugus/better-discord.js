@@ -3,7 +3,7 @@
 const Base = require('./Base');
 const TextBasedChannel = require('./interfaces/TextBasedChannel');
 const { Error } = require('../errors');
-const Snowflake = require('../util/Snowflake');
+const SnowflakeUtil = require('../util/SnowflakeUtil');
 const UserFlags = require('../util/UserFlags');
 
 let Structures;
@@ -28,7 +28,6 @@ class User extends Base {
     this.id = data.id;
 
     this.system = null;
-    this.locale = null;
     this.flags = null;
 
     this._patch(data);
@@ -81,14 +80,6 @@ class User extends Base {
       this.system = Boolean(data.system);
     }
 
-    if ('locale' in data) {
-      /**
-       * The locale of the user's client (ISO 639-1)
-       * @type {?string}
-       */
-      this.locale = data.locale;
-    }
-
     if ('public_flags' in data) {
       /**
        * The flags for this user
@@ -125,7 +116,7 @@ class User extends Base {
    * @readonly
    */
   get createdTimestamp() {
-    return Snowflake.deconstruct(this.id).timestamp;
+    return SnowflakeUtil.deconstruct(this.id).timestamp;
   }
 
   /**
@@ -255,7 +246,7 @@ class User extends Base {
         recipient_id: this.id,
       },
     });
-    return this.client.actions.ChannelCreate.handle(data).channel;
+    return this.client.channels.add(data);
   }
 
   /**
@@ -265,8 +256,9 @@ class User extends Base {
   async deleteDM() {
     const { dmChannel } = this;
     if (!dmChannel) throw new Error('USER_NO_DMCHANNEL');
-    const data = await this.client.api.channels(dmChannel.id).delete();
-    return this.client.actions.ChannelDelete.handle(data).channel;
+    await this.client.api.channels(dmChannel.id).delete();
+    this.client.channels.remove(dmChannel.id);
+    return dmChannel;
   }
 
   /**
@@ -288,7 +280,7 @@ class User extends Base {
 
   /**
    * Fetches this user's flags.
-   * @param {boolean} [force=false] Whether to skip the cache check and request the AP
+   * @param {boolean} [force=false] Whether to skip the cache check and request the API
    * @returns {Promise<UserFlags>}
    */
   async fetchFlags(force = false) {
@@ -300,7 +292,7 @@ class User extends Base {
 
   /**
    * Fetches this user.
-   * @param {boolean} [force=false] Whether to skip the cache check and request the AP
+   * @param {boolean} [force=false] Whether to skip the cache check and request the API
    * @returns {Promise<User>}
    */
   fetch(force = false) {

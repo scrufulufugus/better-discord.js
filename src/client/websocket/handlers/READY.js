@@ -1,5 +1,6 @@
 'use strict';
 
+const ClientApplication = require('../../../structures/ClientApplication');
 let ClientUser;
 
 module.exports = (client, { d: data }, shard) => {
@@ -7,9 +8,8 @@ module.exports = (client, { d: data }, shard) => {
     client.user._patch(data.user);
   } else {
     if (!ClientUser) ClientUser = require('../../../structures/ClientUser');
-    const clientUser = new ClientUser(client, data.user);
-    client.user = clientUser;
-    client.users.cache.set(clientUser.id, clientUser);
+    client.user = new ClientUser(client, data.user);
+    client.users.cache.set(client.user.id, client.user);
   }
 
   for (const guild of data.guilds) {
@@ -27,6 +27,12 @@ module.exports = (client, { d: data }, shard) => {
 
   for (const presence of data.presences) {
     client.presences.add(presence);
+  }
+
+  if (client.application) {
+    client.application._patch(data.application);
+  } else {
+    client.application = new ClientApplication(client, data.application);
   }
 
   shard.checkReady();

@@ -10,8 +10,6 @@
   files:
     - name: Voice
       path: voice.md
-    - name: Web builds
-      path: web.md
     - name: Partials
       path: partials.md
 - name: Examples
@@ -30,3 +28,5 @@
       path: moderation.md
     - name: Webhook
       path: webhook.js
+    - name: Slash Commands
+      path: commands.md
